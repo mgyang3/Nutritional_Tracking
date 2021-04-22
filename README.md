@@ -1,1 +1,1 @@
-# Practicum_Java
+# Practical_Java
