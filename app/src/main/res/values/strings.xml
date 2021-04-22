@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">Nutrition</string>
+    <string name="food_log">Enter food item to record</string>
+    <string name="log_button">Log</string>
+</resources>
