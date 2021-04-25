@@ -1,5 +1,6 @@
 package com.example.nutrition;
 
+import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
@@ -22,6 +23,7 @@ import java.text.*;
 
 public class MainActivity extends AppCompatActivity {
 
+    public static final String EXTRA_MESSAGE = "com.example.nutrition.MESSAGE";
 
     // variable for bar chart
     BarChart barChart;
@@ -34,8 +36,8 @@ public class MainActivity extends AppCompatActivity {
 
     //Nutrient Requirements List - only carbs, fiber, and protein are in grams
     String[] reqs = new String[]{"Carbohydrate", "Fiber", "Protein", "Vitamin A","Vitamin B-6" ,"Vitamin B-12", "Vitamin C", "Vitamin E", "Copper", "Iodine", "Iron", "Magnesium", "Phosphorus",
-            "Potassium", "Selenium","Zinc","Omega-3","Omega-6", "Histidine", "Threonine", "Isoleucine", "Lysine", "Methionine", "Cystine", "Phenylalanine", "Tyrosine", "Valine"};
-    double[] dailyReqs = new double[]{130.0, 38.0, 56.0, 0.9, 1.3, 0.0024, 90.0, 15.0, 0.9, 0.15, 8.0, 400.0, 700.0, 4700.0, 0.055, 1500.0, 11.0, 1600.0, 17000.0, 280.0, 700.0, 1050.0, 1400.0, 2100.0, 2730.0, 728.0, 287.0, 875.0, 875.0, 1820.0};
+            "Potassium", "Selenium","Zinc", "Thiamin", "Riboflavin", "Niacin", "Folate", "Vitamin K", "Calcium", "Sodium", "Theobromine"};
+    double[] dailyReqs = new double[]{130.0, 38.0, 56.0, 0.9, 1.3, 0.0024, 90.0, 15.0, 0.9, 0.15, 8.0, 400.0, 700.0, 4700.0, 0.055, 11.0, 4.89, 1.3, 16.0, 0.4, 0.3, 2500.0, 1500.0, 1500.0};
 
     HashMap<String, Float> NutrientTracker = new HashMap<String, Float>();
     HashMap<String, Float> WeeklyReqs= new HashMap<String, Float>();
@@ -50,6 +52,8 @@ public class MainActivity extends AppCompatActivity {
     Date endDate;
 
     NutrientTable database;
+    ArrayList<Float> percents = new ArrayList<Float>();
+    ArrayList<String> FutureAdditions = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -70,6 +74,14 @@ public class MainActivity extends AppCompatActivity {
 
         // initializing graph
         createGraph();
+    }
+    public void showSymptoms(View view){
+            Intent intent = new Intent(this, DisplayHealthEffects.class);
+            String message = "Made a new screen";
+            intent.putExtra(EXTRA_MESSAGE, message);
+            intent.putExtra("Nutrient List", reqs);
+            intent.putExtra("Percents", percents);
+            startActivity(intent);
     }
 
     @RequiresApi(api = Build.VERSION_CODES.N)
@@ -97,6 +109,7 @@ public class MainActivity extends AppCompatActivity {
             //not logging that food or couldn't find it
             if(foodData.size() <= 1) {
                 System.out.println("Couldn't find food");
+                FutureAdditions.add(s);
                 return;
             }
 
@@ -204,7 +217,7 @@ public class MainActivity extends AppCompatActivity {
 
         ArrayList<Float> vals = new ArrayList<>(NutrientValues);
         ArrayList<Float> WeeklyVals = new ArrayList<>(WeeklyValues);
-        ArrayList<Float> percents = new ArrayList<>(); //might be useless
+
 
         barEntries = new ArrayList<>();
 
@@ -228,13 +241,15 @@ public class MainActivity extends AppCompatActivity {
             float track = NutrientTracker.get(r);
             float base = WeeklyReqs.get(r);
             float y = (track/base) * 100;
-            System.out.println("Tracked value: " + track + ". Weekly value: "+r + ". Percentage: " + y );
+            System.out.println("Tracked value: " + track + ". Weekly value: "+ base + ". Percentage: " + y );
             percents.add(y);
         }
         for(int i=0; i< percents.size();i++ ) {
+
             barEntries.add(new BarEntry(i,percents.get(i)));
         }
         return barEntries;
     }
+
 
 }//ends main class
