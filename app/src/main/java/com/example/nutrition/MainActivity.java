@@ -1,10 +1,12 @@
 package com.example.nutrition;
 
 import android.content.Intent;
+import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
-import android.widget.EditText;
+import android.widget.ArrayAdapter;
+import android.widget.AutoCompleteTextView;
 
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
@@ -17,13 +19,13 @@ import com.github.mikephil.charting.data.BarEntry;
 import com.github.mikephil.charting.formatter.IndexAxisValueFormatter;
 
 import java.io.InputStream;
-import java.lang.reflect.Array;
 import java.util.*;
 import java.text.*;
 
 public class MainActivity extends AppCompatActivity {
 
     public static final String EXTRA_MESSAGE = "com.example.nutrition.MESSAGE";
+    //public static final String TRACKER = "Tracker";
 
     // variable for bar chart
     BarChart barChart;
@@ -32,19 +34,19 @@ public class MainActivity extends AppCompatActivity {
     BarDataSet barDataSet1;
 
     // array list for storing entries.
-    ArrayList barEntries;
+    ArrayList<BarEntry> barEntries;
 
     //Nutrient Requirements List - only carbs, fiber, and protein are in grams
     String[] reqs = new String[]{"Carbohydrate", "Fiber", "Protein", "Vitamin A","Vitamin B-6" ,"Vitamin B-12", "Vitamin C", "Vitamin E", "Copper", "Iodine", "Iron", "Magnesium", "Phosphorus",
             "Potassium", "Selenium","Zinc", "Thiamin", "Riboflavin", "Niacin", "Folate", "Vitamin K", "Calcium", "Sodium", "Theobromine"};
     double[] dailyReqs = new double[]{130.0, 38.0, 56.0, 0.9, 1.3, 0.0024, 90.0, 15.0, 0.9, 0.15, 8.0, 400.0, 700.0, 4700.0, 0.055, 11.0, 4.89, 1.3, 16.0, 0.4, 0.3, 2500.0, 1500.0, 1500.0};
 
-    HashMap<String, Float> NutrientTracker = new HashMap<String, Float>();
-    HashMap<String, Float> WeeklyReqs= new HashMap<String, Float>();
+    HashMap<String, Float> NutrientTracker = new HashMap<>();
+    HashMap<String, Float> WeeklyReqs= new HashMap<>();
 
-    EditText UserEntry;
+    AutoCompleteTextView UserEntry;
 
-    Calendar cal = Calendar.getInstance();
+    //Calendar cal = Calendar.getInstance();
     SimpleDateFormat df = new SimpleDateFormat("MM/dd/yyyy");
     String setDate = "04/16/2021";
 
@@ -52,8 +54,9 @@ public class MainActivity extends AppCompatActivity {
     Date endDate;
 
     NutrientTable database;
-    ArrayList<Float> percents = new ArrayList<Float>();
+    ArrayList<Float> percents = new ArrayList<>();
     ArrayList<String> FutureAdditions = new ArrayList<>();
+    ArrayList<String> databaseKeys = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -65,6 +68,15 @@ public class MainActivity extends AppCompatActivity {
         CSVFile csvFile = new CSVFile(inputStream);
         List scoreList = csvFile.read();
         database = new NutrientTable(scoreList);
+        databaseKeys = database.getDatabaseNames();
+        System.out.println(databaseKeys.toString());
+        System.out.println("Building create");
+
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.select_dialog_item, databaseKeys);
+        AutoCompleteTextView UserEntry = findViewById(R.id.FoodItem);
+        UserEntry.setThreshold(3);//work by the third character
+        UserEntry.setAdapter(adapter);//give adapter data
+        UserEntry.setTextColor(Color.BLACK);
 
         //making hashmap to store tracker values
         for(int i=0; i<reqs.length;i++){
@@ -76,12 +88,12 @@ public class MainActivity extends AppCompatActivity {
         createGraph();
     }
     public void showSymptoms(View view){
-            Intent intent = new Intent(this, DisplayHealthEffects.class);
-            String message = "Made a new screen";
-            intent.putExtra(EXTRA_MESSAGE, message);
-            intent.putExtra("Nutrient List", reqs);
-            intent.putExtra("Percents", percents);
-            startActivity(intent);
+        Intent intent = new Intent(this, DisplayHealthEffects.class);
+        String message = "Made a new screen";
+        intent.putExtra(EXTRA_MESSAGE, message);
+        intent.putExtra("Nutrient List", reqs);
+        intent.putExtra("Percents", percents);
+        startActivity(intent);
     }
 
     @RequiresApi(api = Build.VERSION_CODES.N)
@@ -89,11 +101,11 @@ public class MainActivity extends AppCompatActivity {
 
         boolean resetProgress = checkWeek();
         //reset graph tracker
-        if (resetProgress == true)
+        if (resetProgress)
             createGraph();
 
         //housekeeping of clearing entry for next
-        UserEntry = (EditText)findViewById(R.id.FoodItem);
+        UserEntry = findViewById(R.id.FoodItem);
         String s = UserEntry.getText().toString();
         UserEntry.setText("");
 
@@ -114,25 +126,25 @@ public class MainActivity extends AppCompatActivity {
             }
 
             for(String nutrient: reqs){
-               // System.out.println("nutrient i'm looking for:" + nutrient);
+                // System.out.println("nutrient i'm looking for:" + nutrient);
                 if(nl.containsKey(nutrient)){
 
-             //       System.out.println("nutrient is:" + nutrient);
+                    //       System.out.println("nutrient is:" + nutrient);
                     int f = nl.get(nutrient) - 1;
-             //       System.out.println("the index to check: " + f);
+                    //       System.out.println("the index to check: " + f);
                     float t = foodData.get(f);
-             //       System.out.println("nutrient from the food: "+t);
+                    //       System.out.println("nutrient from the food: "+t);
                     float oldValue = NutrientTracker.get(nutrient);
 
                     t = oldValue + t;
 
                     NutrientTracker.replace(nutrient, t);
-             //       System.out.println("stored req value is:" + NutrientTracker.get(nutrient));
+                    //       System.out.println("stored req value is:" + NutrientTracker.get(nutrient));
                 }//checking if nutrient is in
             }//ends for
         }
 
-        updateGraph(s);
+        updateGraph();
     }//button click end function
 
     public boolean checkWeek(){
@@ -140,7 +152,7 @@ public class MainActivity extends AppCompatActivity {
         try {
             startDate = df.parse(setDate);
             endDate = new Date();
-          //  endDate = df.parse("04/29/2021"); //testing to see if it works
+            //  endDate = df.parse("04/29/2021"); //testing to see if it works
 
             long difference = Math.abs(startDate.getTime() - endDate.getTime());
             long differenceDates = difference / (24 * 60 * 60 * 1000);
@@ -155,8 +167,8 @@ public class MainActivity extends AppCompatActivity {
         return overWeek;
     }
 
-    public void updateGraph(String s){
-        BarDataSet newBarData = new BarDataSet(updateEntries(3f), "Nutritional Requirements");
+    public void updateGraph(){
+        BarDataSet newBarData = new BarDataSet(updateEntries(), "Nutritional Requirements");
         newBarData.setColor(getApplicationContext().getResources().getColor(R.color.purple_200));
 
         BarData replacement = new BarData(newBarData);
@@ -225,12 +237,12 @@ public class MainActivity extends AppCompatActivity {
             float x = ((vals.get(i)) / WeeklyVals.get(i) * 100);
             percents.add(x);
             //adding 1 to all values just to see the bars
-            barEntries.add(new BarEntry( (float)i, (float)(x) ));
+            barEntries.add(new BarEntry( (float)i, (x) ));
         }//ends for
 
         return barEntries;
     }
-    private ArrayList<BarEntry> updateEntries(float z) {
+    private ArrayList<BarEntry> updateEntries() {
 
         //calculating the %
         ArrayList<Float> percents = new ArrayList<>();
@@ -250,6 +262,5 @@ public class MainActivity extends AppCompatActivity {
         }
         return barEntries;
     }
-
 
 }//ends main class

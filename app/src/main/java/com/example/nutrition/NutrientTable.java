@@ -41,4 +41,8 @@ public class NutrientTable {
         return found;
     }
 
+    public ArrayList<String> getDatabaseNames() {
+        ArrayList<String> yourList = new ArrayList<>(databaseTracker.keySet());
+        return yourList;
+    }
 }//ends class
